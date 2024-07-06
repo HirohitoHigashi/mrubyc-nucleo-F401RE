@@ -1,6 +1,8 @@
 # mrubyc-nucleo-F401RE
-Nucleo-F401RE (STM32F401RET6) へ、mruby/c w/ PIOAPI 移植
+Nucleo-F401RE (STM32F401RET6) へ、mruby/c w/ MPIG 移植
 
-記事 「mruby/cペリフェラルライブラリのSTM32マイコンへの実装 Chapter02: GPIOクラス実装編」
+Microcontroller peripheral interface guide  
+https://github.com/mruby/microcontroller-peripheral-interface-guide
 
+記事 「mruby/cペリフェラルライブラリのSTM32マイコンへの実装 Chapter02: GPIOクラス実装編」  
 https://qiita.com/HirohitoHigashi/items/9be9124f01a180fb68b1
