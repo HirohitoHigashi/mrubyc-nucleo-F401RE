@@ -1,5 +1,21 @@
+/*! @file
+  @brief
+  mruby/c startup procedure.
+
+  <pre>
+  An implementation of common peripheral I/O API for mruby/c.
+  https://github.com/mruby/microcontroller-peripheral-interface-guide
+
+  Copyright (C) 2024- Shimane IT Open-Innovation Center.
+
+  This file is distributed under BSD 3-Clause License.
+
+  </pre>
+*/
+
 #include "main.h"
 #include "../mrubyc_src/mrubyc.h"
+#include "stm32f4_uart.h"
 
 static void c_led_write(mrbc_vm *vm, mrbc_value v[], int argc);
 static void c_sw_read(mrbc_vm *vm, mrbc_value v[], int argc);
@@ -13,10 +29,13 @@ static uint8_t memory_pool[MRBC_MEMORY_SIZE];
 void start_mrubyc( void )
 {
   mrbc_init(memory_pool, MRBC_MEMORY_SIZE);
+  uart_init();
 
   // 各クラスの初期化
   void mrbc_init_class_gpio(void);
   mrbc_init_class_gpio();
+  void mrbc_init_class_uart(void);
+  mrbc_init_class_uart();
   void mrbc_init_class_adc(void);
   mrbc_init_class_adc();
   void mrbc_init_class_pwm(void);
@@ -66,9 +85,12 @@ static void c_sw_read(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 int hal_write(int fd, const void *buf, int nbytes)
 {
+#if 0
   extern UART_HandleTypeDef huart2;
   HAL_UART_Transmit( &huart2, buf, nbytes, HAL_MAX_DELAY );
-
+#else
+  uart_write( TBL_UART_HANDLE[2], buf, nbytes );
+#endif
   return nbytes;
 }
 int _write(int file, char *ptr, int len)
