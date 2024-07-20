@@ -25,16 +25,19 @@ static UART_HANDLE uh1 = {
   .unit_num = 1,
   .delimiter = '\n',
   .hal_uart = &huart1,
+  .rxfifo_size = UART_SIZE_RXFIFO,
 };
 static UART_HANDLE uh2 = {
   .unit_num = 2,
   .delimiter = '\n',
   .hal_uart = &huart2,
+  .rxfifo_size = UART_SIZE_RXFIFO,
 };
 static UART_HANDLE uh6 = {
   .unit_num = 6,
   .delimiter = '\n',
   .hal_uart = &huart6,
+  .rxfifo_size = UART_SIZE_RXFIFO,
 };
 
 UART_HANDLE * const TBL_UART_HANDLE[/*unit*/] = {0, &uh1, &uh2, 0, 0, 0, &uh6};
@@ -51,7 +54,7 @@ UART_HANDLE * const TBL_UART_HANDLE[/*unit*/] = {0, &uh1, &uh2, 0, 0, 0, &uh6};
 */
 static inline int uart_get_wr_pos( const UART_HANDLE *hndl )
 {
-  return UART_SIZE_RXFIFO - hndl->hal_uart->hdmarx->Instance->NDTR;
+  return hndl->rxfifo_size - hndl->hal_uart->hdmarx->Instance->NDTR;
 }
 
 
@@ -64,7 +67,7 @@ void uart_init(void)
     UART_HANDLE *hndl = TBL_UART_HANDLE[i];
     if( !hndl ) continue;
 
-    HAL_UART_Receive_DMA(hndl->hal_uart, hndl->rxfifo, UART_SIZE_RXFIFO);
+    HAL_UART_Receive_DMA(hndl->hal_uart, hndl->rxfifo, hndl->rxfifo_size);
   }
 }
 
@@ -128,7 +131,7 @@ void uart_clear_rx_buffer( UART_HANDLE *hndl )
 
   @memberof UART_HANDLE
   @param  hndl		target UART_HANDLE
-  @param  buffer	Pointer of buffer.
+  @param  buffer	pointer to buffer.
   @param  size		Size of buffer.
   @return int		Num of received bytes.
 
@@ -156,7 +159,7 @@ int uart_read( UART_HANDLE *hndl, void *buffer, int size )
     // copy fifo to buffer
     for( ; ba > 0; ba-- ) {
       *buf++ = hndl->rxfifo[hndl->rx_rd++];
-      if( hndl->rx_rd >= UART_SIZE_RXFIFO ) hndl->rx_rd = 0;
+      if( hndl->rx_rd >= hndl->rxfifo_size ) hndl->rx_rd = 0;
     }
   }
 
@@ -165,11 +168,47 @@ int uart_read( UART_HANDLE *hndl, void *buffer, int size )
 
 
 //================================================================
+/*! Receive string.
+
+  @memberof UART_HANDLE
+  @param  hndl		target UART_HANDLE
+  @param  buffer	pointer to buffer.
+  @param  size		Size of buffer.
+  @return int		Num of received bytes.
+
+  @note			If no data received, it blocks execution.
+*/
+int uart_gets( UART_HANDLE *hndl, void *buffer, int size )
+{
+  uint8_t *buf = buffer;
+  int len;
+
+  while( 1 ) {
+    len = uart_can_read_line(hndl);
+    if( len > 0 ) break;
+
+    __NOP(); __NOP(); __NOP(); __NOP();
+  }
+
+  if( len >= size ) return -1;		// buffer size too small.
+
+  // copy fifo to buffer
+  for( int ba = len; ba > 0; ba-- ) {
+    *buf++ = hndl->rxfifo[hndl->rx_rd++];
+    if( hndl->rx_rd >= hndl->rxfifo_size ) hndl->rx_rd = 0;
+  }
+  buf[len] = 0;
+
+  return len;
+}
+
+
+//================================================================
 /*! Send out binary data.
 
   @memberof UART_HANDLE
   @param  hndl		target UART_HANDLE
-  @param  buffer	Pointer of buffer.
+  @param  buffer	pointer to buffer.
   @param  size		Size of buffer.
   @return		Size of transmitted.
 */
@@ -209,7 +248,7 @@ int uart_bytes_available( const UART_HANDLE *hndl )
     return rx_wr - hndl->rx_rd;
   }
   else {
-    return UART_SIZE_RXFIFO - hndl->rx_rd + rx_wr;
+    return hndl->rxfifo_size - hndl->rx_rd + rx_wr;
   }
 }
 
@@ -231,10 +270,10 @@ int uart_can_read_line( const UART_HANDLE *hndl )
       if( hndl->rx_rd < idx ) {
 	return idx - hndl->rx_rd;
       } else {
-	return UART_SIZE_RXFIFO - hndl->rx_rd + idx;
+	return hndl->rxfifo_size - hndl->rx_rd + idx;
       }
     }
-    if( idx >= UART_SIZE_RXFIFO ) idx = 0;
+    if( idx >= hndl->rxfifo_size ) idx = 0;
   }
 
   return 0;
