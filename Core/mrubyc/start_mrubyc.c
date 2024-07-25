@@ -16,12 +16,10 @@
 #include "main.h"
 #include "../mrubyc_src/mrubyc.h"
 #include "stm32f4_uart.h"
+#include "mrbc_firm.h"
 
 static void c_led_write(mrbc_vm *vm, mrbc_value v[], int argc);
 static void c_sw_read(mrbc_vm *vm, mrbc_value v[], int argc);
-
-int receive_bytecode( void *buffer, int buffer_size );
-void * pickup_task( void *task );
 
 
 /* mruby/c プログラムが使うワークメモリの確保 */
@@ -145,12 +143,7 @@ static void c_sw_read(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 int hal_write(int fd, const void *buf, int nbytes)
 {
-#if 1
-  extern UART_HandleTypeDef huart2;
-  HAL_UART_Transmit( &huart2, buf, nbytes, HAL_MAX_DELAY );
-#else
   uart_write( UART_HANDLE_CONSOLE, buf, nbytes );
-#endif
   return nbytes;
 }
 int _write(int file, char *ptr, int len)

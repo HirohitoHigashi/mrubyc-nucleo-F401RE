@@ -44,7 +44,9 @@ typedef struct UART_HANDLE {
 
 extern UART_HANDLE * const TBL_UART_HANDLE[];
 
-#define UART_HANDLE_CONSOLE TBL_UART_HANDLE[6]
+
+//! Defines the UART to be used for the console.
+#define UART_HANDLE_CONSOLE TBL_UART_HANDLE[2]
 
 
 /*

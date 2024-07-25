@@ -10,33 +10,30 @@
   </pre>
 */
 
-/*
-  FLASH structure.
-
-*/
-
+//@cond
+#include <stdint.h>
+#include <string.h>
+//@endcond
 
 #include "main.h"
 #include "../mrubyc_src/mrubyc.h"
 #include "stm32f4_uart.h"
 
-#include <stdint.h>
-#include <string.h>
+
+#define VERSION_STRING   "mruby/c v2.1 RITE0300 v3.3"
 
 const uint32_t IREP_START_ADDR = 0x08060000;
 const uint32_t IREP_END_ADDR   = 0x0807FFFF;
 
-
-#define VERSION_STRING   "mruby/c v2.1 RITE0300 v3.3"
-
-
+static const char RITE[4] = "RITE";
 static const char WHITE_SPACE[] = " \t\r\n\f\v";
 
-#define STRM_READ(buf, len) uart_read(UART_HANDLE_CONSOLE, buf, len)
-#define STRM_GETS(buf, size) uart_gets(UART_HANDLE_CONSOLE, buf, size)
-#define STRM_PUTS(buf) uart_write(UART_HANDLE_CONSOLE, buf, strlen(buf))
-#define STRM_RESET() uart_clear_rx_buffer(UART_HANDLE_CONSOLE)
-#define SYSTEM_RESET() HAL_NVIC_SystemReset()
+
+#define STRM_READ(buf, len)	uart_read(UART_HANDLE_CONSOLE, buf, len)
+#define STRM_GETS(buf, size)	uart_gets(UART_HANDLE_CONSOLE, buf, size)
+#define STRM_PUTS(buf)		uart_write(UART_HANDLE_CONSOLE, buf, strlen(buf))
+#define STRM_RESET()		uart_clear_rx_buffer(UART_HANDLE_CONSOLE)
+#define SYSTEM_RESET()		HAL_NVIC_SystemReset()
 
 static int cmd_help();
 static int cmd_version();
@@ -47,14 +44,10 @@ static int cmd_write();
 static int cmd_showprog();
 
 
-static uint32_t irep_write_addr_;
+static uint32_t irep_write_addr_;	//!< IREP file write point.
 
-
-
-//================================================================
-/*! command table.
-*/
-struct COMMAND_T {
+//! command table.
+static struct COMMAND_T {
   const char *command;
   int (*function)();
 
@@ -177,7 +170,6 @@ static int cmd_write( void *buffer, int buffer_size )
   }
 
   // check 'RITE' magick code.
-  static const char RITE[4] = "RITE";
   p = buffer;
   if( strncmp( (const char *)p, RITE, sizeof(RITE)) != 0 ) {
     STRM_PUTS("-ERR No RITE code received.\r\n");
@@ -218,7 +210,6 @@ static int cmd_write( void *buffer, int buffer_size )
 */
 static int cmd_showprog(void)
 {
-  static const char RITE[4] = "RITE";
   uint8_t *addr = (uint8_t *)IREP_START_ADDR;
   int n = 0;
   char buf[80];
@@ -294,7 +285,6 @@ int receive_bytecode( void *buffer, int buffer_size )
 */
 void * pickup_task( void *task )
 {
-  static const char RITE[4] = "RITE";
   uint8_t *addr = (uint8_t *)IREP_START_ADDR;
 
   if( task ) {
