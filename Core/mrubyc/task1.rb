@@ -1,5 +1,13 @@
 uart6 = UART.new(6)
 
+def split_ddmm( s )
+  idx = s.index(".").to_i - 2
+  raise "Format error" if idx <= 0
+
+  s[idx,0] = " "
+  return s
+end
+
 while true
   s = uart6.gets
   next if !s.start_with?("$GNRMC")
@@ -18,14 +26,14 @@ while true
   sec = rmc[1][4,2].to_i
 
   # 緯度
-  south_north = rmc[4]
-  latitude = rmc[3]
+  south_north = {"N"=>"+", "S"=>"-"}[rmc[4]]
+  latitude = split_ddmm(rmc[3])
 
   # 経度
-  east_west = rmc[6]
-  longitude = rmc[5]
+  east_west = {"E"=>"+", "W"=>"-"}[rmc[6]]
+  longitude = split_ddmm(rmc[5])
 
-  printf( "%d/%2d/%2d %2d:%02d:%02d(UTC)  Lat:%s%s Long:%s%s\n",
-          year, mon, day, hour, min, sec,
-          latitude, south_north, longitude, east_west )
+  printf("%d/%2d/%2d %2d:%02d:%02d(UTC) Lat,Long: %s%s, %s%s\n",
+         year, mon, day, hour, min, sec,
+         south_north, latitude, east_west, longitude )
 end
